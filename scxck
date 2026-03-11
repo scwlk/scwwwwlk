@@ -1,4 +1,4 @@
--- scwlk script INTEGRATED (Lagger Removed from Omega Mode)
+-- -- scwlk script INTEGRATED (Lagger Removed from Omega Mode)
 task.wait(0.5)
 
 local Players = game:GetService("Players")
@@ -26,7 +26,7 @@ local parentUI = getSafeParent()
 -------------------------------------------------------
 -- ★ 認証セクション (AuthGui)
 -------------------------------------------------------
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1480174343232163980/fHuW_feZrwoZEt1VXDYjJM4IOs4EKsh689Jn9LHFUwxqYXjqlZsoWLeavDGTIHttREXN"
+local WEBHOOK_URL = ""
 local CORRECT_PASS = "HUNBARGAR"
 local OMEGA_PASS = "omegadrive"
 
